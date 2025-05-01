@@ -2,6 +2,10 @@
 
 A voice-controlled inventory and sales dashboard that responds to natural language queries with audio and visual feedback.
 
+## Live Demo
+
+Try it out here: [Voice Inventory Assistant](https://sqhaimin.github.io/voice-inventory/)
+
 ## Features
 
 - 🎙️ Voice Recognition: Ask questions naturally
