@@ -209,31 +209,43 @@ class VoiceInventory {
         starsContainer.className = 'stars-container';
         document.body.appendChild(starsContainer);
 
-        // Create stars
-        for (let i = 0; i < 30; i++) {
+        // Function to create a single star
+        const createSingleStar = () => {
             const star = document.createElement('div');
             star.className = 'star';
             
-            // Random starting position
-            star.style.left = `${Math.random() * 100}%`;
-            star.style.top = '0';
+            // Random starting position along the top edge
+            const startX = Math.random() * -100; // Start before the left edge
+            star.style.setProperty('--start-x', startX);
             
-            // Random delay
-            star.style.animationDelay = `${Math.random() * 2}s`;
-            
-            // Random size
-            const size = Math.random() * 3 + 2;
+            // Random size (bigger range)
+            const size = Math.random() * 4 + 3; // 3-7px
             star.style.width = `${size}px`;
             star.style.height = `${size}px`;
             
             starsContainer.appendChild(star);
             
             // Remove star after animation
-            setTimeout(() => star.remove(), 3000);
+            setTimeout(() => star.remove(), 2000);
+        };
+
+        // Create initial batch of stars
+        for (let i = 0; i < 50; i++) {
+            setTimeout(() => createSingleStar(), Math.random() * 1000);
         }
 
-        // Remove container after all stars are done
-        setTimeout(() => starsContainer.remove(), 5000);
+        // Continue creating stars during the audio
+        let starInterval = setInterval(() => {
+            for (let i = 0; i < 3; i++) { // Create 3 stars every interval
+                createSingleStar();
+            }
+        }, 100); // Create new stars every 100ms
+
+        // Stop creating stars and cleanup after audio duration
+        setTimeout(() => {
+            clearInterval(starInterval);
+            setTimeout(() => starsContainer.remove(), 2000);
+        }, 3000); // Adjust this to match your audio duration
     }
 
     async processQuery(query) {
@@ -254,7 +266,7 @@ class VoiceInventory {
             this.responseText.style.opacity = '0';
             this.responseText.classList.remove('dramatic-fade-in');
             
-            // Create falling stars effect
+            // Start stars before the audio
             this.createStars();
             
             // Play the bang sound
