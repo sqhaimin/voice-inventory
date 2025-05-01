@@ -197,6 +197,45 @@ class VoiceInventory {
         });
     }
     
+    createStars() {
+        // Clear any existing stars container
+        const existingContainer = document.querySelector('.stars-container');
+        if (existingContainer) {
+            existingContainer.remove();
+        }
+
+        // Create new stars container
+        const starsContainer = document.createElement('div');
+        starsContainer.className = 'stars-container';
+        document.body.appendChild(starsContainer);
+
+        // Create stars
+        for (let i = 0; i < 30; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            
+            // Random starting position
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = '0';
+            
+            // Random delay
+            star.style.animationDelay = `${Math.random() * 2}s`;
+            
+            // Random size
+            const size = Math.random() * 3 + 2;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            
+            starsContainer.appendChild(star);
+            
+            // Remove star after animation
+            setTimeout(() => star.remove(), 3000);
+        }
+
+        // Remove container after all stars are done
+        setTimeout(() => starsContainer.remove(), 5000);
+    }
+
     async processQuery(query) {
         try {
             const lowerQuery = query.toLowerCase();
@@ -215,35 +254,11 @@ class VoiceInventory {
             this.responseText.style.opacity = '0';
             this.responseText.classList.remove('dramatic-fade-in');
             
-            // Create stars container if it doesn't exist
-            let starsContainer = document.querySelector('.stars-container');
-            if (!starsContainer) {
-                starsContainer = document.createElement('div');
-                starsContainer.className = 'stars-container';
-                this.responseText.parentNode.appendChild(starsContainer);
-            } else {
-                starsContainer.innerHTML = ''; // Clear existing stars
-            }
+            // Create falling stars effect
+            this.createStars();
             
-            // Play the bang sound and create falling stars
+            // Play the bang sound
             await this.playDoodoodoo();
-            
-            // Create falling stars
-            const createStar = (delay) => {
-                const star = document.createElement('div');
-                star.className = 'star';
-                star.style.left = Math.random() * 100 + '%';
-                star.style.animationDelay = delay + 's';
-                starsContainer.appendChild(star);
-                
-                // Remove star after animation
-                setTimeout(() => star.remove(), 1500);
-            };
-            
-            // Create multiple stars with different delays
-            for (let i = 0; i < 20; i++) {
-                createStar(Math.random() * 2);
-            }
             
             // Add dramatic fade-in class
             this.responseText.classList.add('dramatic-fade-in');
