@@ -215,17 +215,44 @@ class VoiceInventory {
             this.responseText.style.opacity = '0';
             this.responseText.classList.remove('dramatic-fade-in');
             
-            // Play the bang sound first
+            // Create stars container if it doesn't exist
+            let starsContainer = document.querySelector('.stars-container');
+            if (!starsContainer) {
+                starsContainer = document.createElement('div');
+                starsContainer.className = 'stars-container';
+                this.responseText.parentNode.appendChild(starsContainer);
+            } else {
+                starsContainer.innerHTML = ''; // Clear existing stars
+            }
+            
+            // Play the bang sound and create falling stars
             await this.playDoodoodoo();
             
-            // Trigger the dramatic fade-in
+            // Create falling stars
+            const createStar = (delay) => {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.animationDelay = delay + 's';
+                starsContainer.appendChild(star);
+                
+                // Remove star after animation
+                setTimeout(() => star.remove(), 1500);
+            };
+            
+            // Create multiple stars with different delays
+            for (let i = 0; i < 20; i++) {
+                createStar(Math.random() * 2);
+            }
+            
+            // Add dramatic fade-in class
             this.responseText.classList.add('dramatic-fade-in');
             
-            // Start speaking after the animation begins
+            // Start speaking after animation begins
             setTimeout(() => {
                 this.speakResponse(response);
                 this.addToHistory(query, response);
-            }, 500); // Start speaking halfway through the animation
+            }, 1000);
             
         } catch (error) {
             console.error('Error processing query:', error);
