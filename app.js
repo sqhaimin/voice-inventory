@@ -38,36 +38,36 @@ class VoiceInventory {
             'mangoes': 45
         };
         
-        // Mock sales data
+        // Mock sales data with rounded figures
         const now = new Date();
         this.mockSales = {
             hourly: {
-                amount: 458.75,
+                amount: 500,         // Rounded from 458.75
                 transactions: 23,
                 timestamp: now.getTime()
             },
             daily: {
-                amount: 3245.90,
+                amount: 3000,        // Rounded from 3245.90
                 transactions: 162,
                 timestamp: now.setHours(0,0,0,0)
             },
             weekly: {
-                amount: 22678.50,
+                amount: 23000,       // Rounded from 22678.50
                 transactions: 1134,
                 timestamp: now.setDate(now.getDate() - now.getDay())
             },
             monthly: {
-                amount: 97456.80,
+                amount: 97000,       // Rounded from 97456.80
                 transactions: 4872,
                 timestamp: now.setDate(1)
             },
             quarterly: {
-                amount: 285789.50,
+                amount: 286000,      // Rounded from 285789.50
                 transactions: 14268,
                 timestamp: new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1).getTime()
             },
             yearly: {
-                amount: 1157892.75,
+                amount: 1158000,     // Rounded from 1157892.75
                 transactions: 57864,
                 timestamp: new Date(now.getFullYear(), 0, 1).getTime()
             }
@@ -269,12 +269,6 @@ class VoiceInventory {
     playCelebration() {
         return new Promise((resolve) => {
             const now = this.audioContext.currentTime;
-            const duration = 0.1;
-            
-            // Create main gain node
-            const mainGain = this.audioContext.createGain();
-            mainGain.connect(this.audioContext.destination);
-            mainGain.gain.setValueAtTime(0.4, now);  // Increased overall volume
             
             // Load and play crowd cheering sound
             fetch('crowd-cheers-314919.mp3')
@@ -285,93 +279,25 @@ class VoiceInventory {
                     const crowdGain = this.audioContext.createGain();
                     crowdSource.buffer = audioBuffer;
                     
-                    // Set volume for crowd sound - increased volume and longer duration
+                    // Set volume for crowd sound
                     crowdGain.gain.setValueAtTime(0, now);
-                    crowdGain.gain.linearRampToValueAtTime(0.8, now + 0.3); // Faster fade in, higher volume
-                    crowdGain.gain.setValueAtTime(0.8, now + 3.0);          // Hold longer
-                    crowdGain.gain.linearRampToValueAtTime(0, now + 4.0);   // Longer fade out
+                    crowdGain.gain.linearRampToValueAtTime(0.8, now + 0.3); // Quick fade in
+                    crowdGain.gain.setValueAtTime(0.8, now + 3.0);          // Hold volume
+                    crowdGain.gain.linearRampToValueAtTime(0, now + 4.0);   // Fade out
                     
                     crowdSource.connect(crowdGain);
                     crowdGain.connect(this.audioContext.destination);
                     
                     // Play the crowd sound
                     crowdSource.start();
+                    
+                    // Resolve after the sound has played
+                    setTimeout(resolve, 4000); // 4 seconds total duration
                 })
-                .catch(error => console.error('Error loading crowd sound:', error));
-            
-            // Woohoo sound (ascending whistles) - made louder
-            const wooFreqs = [440, 587, 880, 1174];
-            wooFreqs.forEach((freq, index) => {
-                const osc = this.audioContext.createOscillator();
-                const gain = this.audioContext.createGain();
-                
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq * 0.8, now + index * duration);
-                osc.frequency.linearRampToValueAtTime(freq * 1.2, now + (index + 1) * duration);
-                
-                gain.gain.setValueAtTime(0, now + index * duration);
-                gain.gain.linearRampToValueAtTime(0.3, now + index * duration + 0.02);  // Increased volume
-                gain.gain.linearRampToValueAtTime(0, now + (index + 1) * duration);
-                
-                gain.connect(mainGain);
-                osc.connect(gain);
-                
-                osc.start(now + index * duration);
-                osc.stop(now + (index + 1) * duration);
-            });
-            
-            // Add more celebratory chimes throughout the celebration
-            const playChimes = (startTime) => {
-                const chimeFreqs = [1760, 1397, 1174, 880];
-                chimeFreqs.forEach((freq, index) => {
-                    const osc = this.audioContext.createOscillator();
-                    const gain = this.audioContext.createGain();
-                    
-                    osc.type = 'sine';
-                    osc.frequency.value = freq;
-                    
-                    gain.gain.setValueAtTime(0, now + startTime + index * 0.1);
-                    gain.gain.linearRampToValueAtTime(0.2, now + startTime + index * 0.1 + 0.05);  // Increased volume
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + startTime + index * 0.1 + 0.5);
-                    
-                    gain.connect(mainGain);
-                    osc.connect(gain);
-                    
-                    osc.start(now + startTime + index * 0.1);
-                    osc.stop(now + startTime + index * 0.1 + 0.5);
+                .catch(error => {
+                    console.error('Error loading crowd sound:', error);
+                    resolve(); // Resolve even if there's an error
                 });
-            };
-            
-            // Play chimes multiple times during the celebration
-            setTimeout(() => playChimes(0.2), duration * 2 * 1000);    // First set
-            setTimeout(() => playChimes(1.5), duration * 15 * 1000);   // Middle set
-            setTimeout(() => playChimes(2.8), duration * 28 * 1000);   // Final set
-            
-            // Add some extra "woo" sounds during the celebration
-            setTimeout(() => {
-                const wooFreqs = [880, 1174, 1480];
-                wooFreqs.forEach((freq, index) => {
-                    const osc = this.audioContext.createOscillator();
-                    const gain = this.audioContext.createGain();
-                    
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq * 0.9, now + 2 + index * 0.15);
-                    osc.frequency.linearRampToValueAtTime(freq * 1.1, now + 2 + (index + 1) * 0.15);
-                    
-                    gain.gain.setValueAtTime(0, now + 2 + index * 0.15);
-                    gain.gain.linearRampToValueAtTime(0.25, now + 2 + index * 0.15 + 0.02);
-                    gain.gain.linearRampToValueAtTime(0, now + 2 + (index + 1) * 0.15);
-                    
-                    gain.connect(mainGain);
-                    osc.connect(gain);
-                    
-                    osc.start(now + 2 + index * 0.15);
-                    osc.stop(now + 2 + (index + 1) * 0.15);
-                });
-            }, 2000);
-            
-            // Resolve after all celebration sounds have played
-            setTimeout(resolve, 4500);  // Extended to match longer celebration
         });
     }
     
