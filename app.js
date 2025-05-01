@@ -282,16 +282,14 @@ class VoiceInventory {
             this.responseText.style.opacity = '0';
             this.responseText.classList.remove('dramatic-fade-in');
             
-            // Start stars before the audio
+            // Start stars and trigger dramatic fade-in immediately
             this.createStars();
+            this.responseText.classList.add('dramatic-fade-in');
             
             // Play the bang sound
             await this.playDoodoodoo();
             
-            // Add dramatic fade-in class
-            this.responseText.classList.add('dramatic-fade-in');
-            
-            // Start speaking after animation begins
+            // Start speaking after the animation and sound
             setTimeout(() => {
                 this.speakResponse(response);
                 this.addToHistory(query, response);
