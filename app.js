@@ -214,14 +214,30 @@ class VoiceInventory {
             const star = document.createElement('div');
             star.className = 'star';
             
-            // Random starting position along the top edge
-            const startX = Math.random() * -100; // Start before the left edge
-            star.style.setProperty('--start-x', startX);
+            // Random path type
+            const pathType = Math.floor(Math.random() * 4) + 1;
+            star.classList.add(`path${pathType}`);
+            
+            // Random starting and ending positions
+            const startX = Math.random() * window.innerWidth;
+            const endOffset = (Math.random() - 0.5) * 300; // Random offset for end position
+            const endX = startX + endOffset;
+            const midX = (startX + endX) / 2 + (Math.random() - 0.5) * 200; // Middle point for curved path
+            const curveAngle = (Math.random() - 0.5) * 60; // Random curve angle
+            
+            star.style.setProperty('--start-x', `${startX}px`);
+            star.style.setProperty('--end-x', `${endX}px`);
+            star.style.setProperty('--mid-x', `${midX}px`);
+            star.style.setProperty('--curve-angle', `${curveAngle}deg`);
             
             // Random size (bigger range)
-            const size = Math.random() * 4 + 3; // 3-7px
+            const size = Math.random() * 4 + 2; // 2-6px
             star.style.width = `${size}px`;
             star.style.height = `${size}px`;
+            
+            // Random brightness variation
+            const brightness = Math.random() * 0.5 + 0.5; // 50-100% brightness
+            star.style.opacity = brightness;
             
             starsContainer.appendChild(star);
             
@@ -230,16 +246,16 @@ class VoiceInventory {
         };
 
         // Create initial batch of stars
-        for (let i = 0; i < 50; i++) {
+        for (let i = 0; i < 100; i++) {
             setTimeout(() => createSingleStar(), Math.random() * 1000);
         }
 
         // Continue creating stars during the audio
         let starInterval = setInterval(() => {
-            for (let i = 0; i < 3; i++) { // Create 3 stars every interval
+            for (let i = 0; i < 5; i++) { // Create 5 stars every interval
                 createSingleStar();
             }
-        }, 100); // Create new stars every 100ms
+        }, 50); // Create new stars every 50ms (more frequent)
 
         // Stop creating stars and cleanup after audio duration
         setTimeout(() => {
