@@ -280,7 +280,7 @@ class VoiceInventory {
             // Set the response text but keep it invisible and blurred
             this.responseText.textContent = response;
             this.responseText.style.opacity = '0';
-            this.responseText.classList.remove('dramatic-fade-in', 'clear-blur');
+            this.responseText.classList.remove('dramatic-fade-in');
             
             // Start stars and trigger dramatic fade-in
             this.createStars();
@@ -288,11 +288,6 @@ class VoiceInventory {
             
             // Play the bang sound
             await this.playDoodoodoo();
-            
-            // Clear blur after intro audio finishes
-            setTimeout(() => {
-                this.responseText.classList.add('clear-blur');
-            }, 500); // Add slight delay after audio
             
             // Start speaking after effects
             setTimeout(() => {

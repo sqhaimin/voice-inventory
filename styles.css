@@ -125,20 +125,16 @@ body {
     transform: scale(0.6) translateY(40px);
     position: relative;
     z-index: 2;
-    filter: blur(20px);
+    filter: blur(25px);
     will-change: transform, opacity, filter;
     backface-visibility: hidden;
     -webkit-font-smoothing: antialiased;
-    transition: filter 0.5s ease-out;
 }
 
 .response.dramatic-fade-in {
     animation: dramaticScale 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-              dramaticFade 3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.response.clear-blur {
-    filter: blur(0px);
+              dramaticFade 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+              dramaticUnblur 3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
 @keyframes dramaticScale {
@@ -156,6 +152,18 @@ body {
     }
     100% {
         opacity: 1;
+    }
+}
+
+@keyframes dramaticUnblur {
+    0% {
+        filter: blur(25px);
+    }
+    10% {
+        filter: blur(25px);
+    }
+    100% {
+        filter: blur(0px);
     }
 }
 
