@@ -125,7 +125,7 @@ body {
     transform: scale(0.6) translateY(40px);
     position: relative;
     z-index: 2;
-    filter: blur(25px);
+    filter: blur(30px);
     will-change: transform, opacity, filter;
     backface-visibility: hidden;
     -webkit-font-smoothing: antialiased;
@@ -134,7 +134,7 @@ body {
 .response.dramatic-fade-in {
     animation: dramaticScale 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
               dramaticFade 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-              dramaticUnblur 3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+              dramaticUnblur 3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 @keyframes dramaticScale {
@@ -157,10 +157,16 @@ body {
 
 @keyframes dramaticUnblur {
     0% {
-        filter: blur(25px);
+        filter: blur(30px);
     }
-    10% {
-        filter: blur(25px);
+    40% {
+        filter: blur(30px);
+    }
+    85% {
+        filter: blur(15px);
+    }
+    95% {
+        filter: blur(5px);
     }
     100% {
         filter: blur(0px);
