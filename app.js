@@ -1,36 +1,48 @@
 class VoiceInventory {
     constructor() {
+        // Configuration settings
+        this.config = {
+            timing: {
+                failSoundDelay: 300,    // Delay before fail sound (ms)
+                responseDelay: 300,     // Delay after initial sound (ms)
+                starsDuration: 3000,    // Duration of stars animation (ms)
+                blurDuration: 12000     // Duration of blur animation (ms)
+            },
+            audio: {
+                failSoundVolume: 0.8,   // Volume for fail sound (0-1)
+                initialSoundVolume: 1.0  // Volume for initial sound (0-1)
+            }
+        };
+
         this.micButton = document.getElementById('micButton');
         this.statusIndicator = document.getElementById('statusIndicator');
         this.transcriptText = document.getElementById('transcriptText');
         this.responseText = document.getElementById('responseText');
         this.queryHistory = document.getElementById('queryHistory');
         
-        // Initialize speech recognition
+        if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+            this.transcriptText.textContent = 'Speech recognition is not supported in this browser. Please try Chrome.';
+            return;
+        }
+        
         this.recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         this.recognition.continuous = false;
         this.recognition.interimResults = false;
         this.recognition.lang = 'en-US';
         
-        // Initialize speech synthesis
         this.synthesis = window.speechSynthesis;
         this.voice = null;
         
-        // Initialize audio context for sound effects
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
+        this.audioContext = null;
         this.isListening = false;
         this.setupVoice();
         this.setupEventListeners();
-        
-        // Initialize mock data
         this.initializeMockData();
     }
     
     initializeMockData() {
-        // Mock inventory data
         this.mockInventory = {
-            'bananas': 50,
+            'bananas': 0,
             'apples': 75,
             'oranges': 60,
             'lemons': 30,
@@ -38,36 +50,35 @@ class VoiceInventory {
             'mangoes': 45
         };
         
-        // Mock sales data with rounded figures
         const now = new Date();
         this.mockSales = {
             hourly: {
-                amount: 500,         // Rounded from 458.75
+                amount: 500,
                 transactions: 23,
                 timestamp: now.getTime()
             },
             daily: {
-                amount: 3000,        // Rounded from 3245.90
+                amount: 3000,
                 transactions: 162,
                 timestamp: now.setHours(0,0,0,0)
             },
             weekly: {
-                amount: 23000,       // Rounded from 22678.50
+                amount: 23000,
                 transactions: 1134,
                 timestamp: now.setDate(now.getDate() - now.getDay())
             },
             monthly: {
-                amount: 97000,       // Rounded from 97456.80
+                amount: 97000,
                 transactions: 4872,
                 timestamp: now.setDate(1)
             },
             quarterly: {
-                amount: 286000,      // Rounded from 285789.50
+                amount: 286000,
                 transactions: 14268,
                 timestamp: new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1).getTime()
             },
             yearly: {
-                amount: 1158000,     // Rounded from 1157892.75
+                amount: 1158000,
                 transactions: 57864,
                 timestamp: new Date(now.getFullYear(), 0, 1).getTime()
             }
@@ -75,8 +86,9 @@ class VoiceInventory {
     }
     
     setupVoice() {
-        // Wait for voices to be loaded
-        window.speechSynthesis.onvoiceschanged = () => {
+        if (!this.synthesis) return;
+        
+        this.synthesis.onvoiceschanged = () => {
             const voices = this.synthesis.getVoices();
             this.voice = voices.find(voice => 
                 voice.lang.includes('en') && voice.name.includes('Samantha')) ||
@@ -89,11 +101,29 @@ class VoiceInventory {
     }
     
     setupEventListeners() {
-        this.micButton.addEventListener('click', () => {
+        this.micButton.addEventListener('click', async () => {
+            if (!this.audioContext) {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (error) {
+                    console.error('Audio context initialization error:', error);
+                }
+            }
+            
             if (this.isListening) {
                 this.stopListening();
             } else {
-                this.startListening();
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(track => track.stop());
+                    this.startListening();
+                } catch (error) {
+                    this.transcriptText.textContent = 'Please allow microphone access to use voice features.';
+                    this.statusIndicator.classList.add('error');
+                    setTimeout(() => {
+                        this.statusIndicator.classList.remove('error');
+                    }, 2000);
+                }
             }
         });
         
@@ -115,7 +145,6 @@ class VoiceInventory {
         };
         
         this.recognition.onerror = (event) => {
-            console.error('Speech recognition error:', event.error);
             this.statusIndicator.classList.add('error');
             this.transcriptText.textContent = 'Error: ' + event.error;
             setTimeout(() => {
@@ -126,14 +155,17 @@ class VoiceInventory {
     
     startListening() {
         try {
-            // Resume audio context if it's suspended
-            if (this.audioContext.state === 'suspended') {
+            if (this.audioContext && this.audioContext.state === 'suspended') {
                 this.audioContext.resume();
             }
-            this.synthesis.cancel();
+            
+            if (this.synthesis) {
+                this.synthesis.cancel();
+            }
+            
             this.recognition.start();
         } catch (error) {
-            console.error('Speech recognition start error:', error);
+            this.transcriptText.textContent = 'Error starting speech recognition. Please try again.';
         }
     }
     
@@ -146,10 +178,11 @@ class VoiceInventory {
     }
     
     playDoodoodoo() {
+        if (!this.audioContext) return Promise.resolve();
+        
         return new Promise((resolve) => {
             const now = this.audioContext.currentTime;
             
-            // Load and play the bang sound
             fetch('bang-140381.mp3')
                 .then(response => response.arrayBuffer())
                 .then(arrayBuffer => this.audioContext.decodeAudioData(arrayBuffer))
@@ -158,7 +191,6 @@ class VoiceInventory {
                     const bangGain = this.audioContext.createGain();
                     bangSource.buffer = audioBuffer;
                     
-                    // Create a compressor to handle the loud sound safely
                     const compressor = this.audioContext.createDynamicsCompressor();
                     compressor.threshold.value = -24;
                     compressor.knee.value = 30;
@@ -166,137 +198,156 @@ class VoiceInventory {
                     compressor.attack.value = 0.003;
                     compressor.release.value = 0.25;
                     
-                    // Create a filter to enhance the bang
                     const filter = this.audioContext.createBiquadFilter();
                     filter.type = 'lowshelf';
                     filter.frequency.value = 150;
                     filter.gain.value = 3;
                     
-                    // Set volume for maximum impact while preventing distortion
                     bangGain.gain.setValueAtTime(0, now);
-                    bangGain.gain.linearRampToValueAtTime(1.0, now + 0.01);  // Quick fade in
-                    bangGain.gain.setValueAtTime(1.0, now + audioBuffer.duration - 0.1); // Hold full volume
-                    bangGain.gain.linearRampToValueAtTime(0, now + audioBuffer.duration); // Quick fade out
+                    bangGain.gain.linearRampToValueAtTime(1.0, now + 0.01);
+                    bangGain.gain.setValueAtTime(1.0, now + audioBuffer.duration - 0.1);
+                    bangGain.gain.linearRampToValueAtTime(0, now + audioBuffer.duration);
                     
-                    // Connect the audio processing chain
                     bangSource.connect(filter);
                     filter.connect(bangGain);
                     bangGain.connect(compressor);
                     compressor.connect(this.audioContext.destination);
                     
-                    // Play the bang sound
                     bangSource.start(now);
                     
-                    // Resolve after the full sound has played
                     setTimeout(resolve, audioBuffer.duration * 1000);
                 })
                 .catch(error => {
                     console.error('Error loading bang sound:', error);
-                    resolve(); // Resolve even if there's an error
+                    resolve();
+                });
+        });
+    }
+    
+    playFailSound() {
+        if (!this.audioContext) return Promise.resolve();
+        
+        return new Promise((resolve) => {
+            const now = this.audioContext.currentTime;
+            
+            fetch('cartoon-fail-trumpet-278822.mp3')
+                .then(response => response.arrayBuffer())
+                .then(arrayBuffer => this.audioContext.decodeAudioData(arrayBuffer))
+                .then(audioBuffer => {
+                    const failSource = this.audioContext.createBufferSource();
+                    const failGain = this.audioContext.createGain();
+                    failSource.buffer = audioBuffer;
+                    
+                    // Set volume for fail sound using config
+                    failGain.gain.setValueAtTime(0, now);
+                    failGain.gain.linearRampToValueAtTime(this.config.audio.failSoundVolume, now + 0.1);
+                    failGain.gain.setValueAtTime(this.config.audio.failSoundVolume, now + audioBuffer.duration - 0.2);
+                    failGain.gain.linearRampToValueAtTime(0, now + audioBuffer.duration);
+                    
+                    failSource.connect(failGain);
+                    failGain.connect(this.audioContext.destination);
+                    
+                    failSource.start(now);
+                    
+                    setTimeout(resolve, audioBuffer.duration * 1000);
+                })
+                .catch(error => {
+                    console.error('Error loading fail sound:', error);
+                    resolve();
                 });
         });
     }
     
     createStars() {
-        // Clear any existing stars container
         const existingContainer = document.querySelector('.stars-container');
         if (existingContainer) {
             existingContainer.remove();
         }
 
-        // Create new stars container
         const starsContainer = document.createElement('div');
         starsContainer.className = 'stars-container';
         document.body.appendChild(starsContainer);
 
-        // Function to create a single star
         const createSingleStar = () => {
             const star = document.createElement('div');
             star.className = 'star';
             
-            // Random path type
             const pathType = Math.floor(Math.random() * 4) + 1;
             star.classList.add(`path${pathType}`);
             
-            // Random starting and ending positions
             const startX = Math.random() * window.innerWidth;
-            const endOffset = (Math.random() - 0.5) * 300; // Random offset for end position
+            const endOffset = (Math.random() - 0.5) * 300;
             const endX = startX + endOffset;
-            const midX = (startX + endX) / 2 + (Math.random() - 0.5) * 200; // Middle point for curved path
-            const curveAngle = (Math.random() - 0.5) * 60; // Random curve angle
+            const midX = (startX + endX) / 2 + (Math.random() - 0.5) * 200;
+            const curveAngle = (Math.random() - 0.5) * 60;
             
             star.style.setProperty('--start-x', `${startX}px`);
             star.style.setProperty('--end-x', `${endX}px`);
             star.style.setProperty('--mid-x', `${midX}px`);
             star.style.setProperty('--curve-angle', `${curveAngle}deg`);
             
-            // Random size (bigger range)
-            const size = Math.random() * 4 + 2; // 2-6px
+            const size = Math.random() * 4 + 2;
             star.style.width = `${size}px`;
             star.style.height = `${size}px`;
             
-            // Random brightness variation
-            const brightness = Math.random() * 0.5 + 0.5; // 50-100% brightness
+            const brightness = Math.random() * 0.5 + 0.5;
             star.style.opacity = brightness;
             
             starsContainer.appendChild(star);
             
-            // Remove star after animation
             setTimeout(() => star.remove(), 2000);
         };
 
-        // Create initial batch of stars
         for (let i = 0; i < 100; i++) {
             setTimeout(() => createSingleStar(), Math.random() * 1000);
         }
 
-        // Continue creating stars during the audio
         let starInterval = setInterval(() => {
-            for (let i = 0; i < 5; i++) { // Create 5 stars every interval
+            for (let i = 0; i < 5; i++) {
                 createSingleStar();
             }
-        }, 50); // Create new stars every 50ms (more frequent)
+        }, 50);
 
-        // Stop creating stars and cleanup after audio duration
         setTimeout(() => {
             clearInterval(starInterval);
             setTimeout(() => starsContainer.remove(), 2000);
-        }, 3000); // Adjust this to match your audio duration
+        }, 3000);
     }
 
     async processQuery(query) {
         try {
             const lowerQuery = query.toLowerCase();
             let response;
+            let isOutOfStock = false;
             
-            // Check if it's a sales query by looking for sales keywords or time periods
             if (this.isSalesQuery(lowerQuery) || this.containsTimePeriod(lowerQuery)) {
                 response = this.processSalesQuery(lowerQuery);
             } else {
-                // If not a sales query, check inventory
-                response = await this.querySquareInventory(lowerQuery);
+                const inventoryResponse = await this.querySquareInventory(lowerQuery);
+                response = inventoryResponse.text;
+                isOutOfStock = inventoryResponse.isOutOfStock;
             }
             
-            // Set the response text but keep it invisible and blurred
             this.responseText.textContent = response;
             this.responseText.style.opacity = '0';
             this.responseText.classList.remove('dramatic-fade-in');
             
-            // Force a reflow to ensure animation restarts
             void this.responseText.offsetWidth;
             
-            // Start stars and trigger dramatic fade-in
             this.createStars();
             this.responseText.classList.add('dramatic-fade-in');
             
-            // Play the intro audio (12 seconds)
             await this.playDoodoodoo();
             
-            // Add a small pause after intro audio (0.2 seconds)
-            await new Promise(resolve => setTimeout(resolve, 200));
+            await new Promise(resolve => setTimeout(resolve, this.config.timing.responseDelay));
             
-            // Start speaking the response
             await this.speakResponse(response);
+            
+            if (isOutOfStock) {
+                await new Promise(resolve => setTimeout(resolve, this.config.timing.failSoundDelay));
+                await this.playFailSound();
+            }
+            
             this.addToHistory(query, response);
             
         } catch (error) {
@@ -309,6 +360,11 @@ class VoiceInventory {
     
     async speakResponse(text) {
         return new Promise((resolve) => {
+            if (!this.synthesis) {
+                resolve();
+                return;
+            }
+            
             this.synthesis.cancel();
             
             const utterance = new SpeechSynthesisUtterance(text);
@@ -319,19 +375,17 @@ class VoiceInventory {
             
             this.responseText.classList.add('speaking');
             
-            // Check if this is a yearly revenue response over $1 million
             const isHighRevenue = text.includes('yearly sales revenue') && 
                                 text.includes('$') && 
                                 parseFloat(text.replace(/[^0-9.-]+/g, '')) > 1000000;
             
-            // If it's high revenue, play celebration after speech with a small delay
             if (isHighRevenue) {
                 utterance.onend = () => {
                     this.responseText.classList.remove('speaking');
                     setTimeout(() => {
                         this.playCelebration();
                         resolve();
-                    }, 200); // 0.2 second delay before celebration
+                    }, 300);
                 };
             } else {
                 utterance.onend = () => {
@@ -343,13 +397,13 @@ class VoiceInventory {
             this.synthesis.speak(utterance);
         });
     }
-    }
     
     playCelebration() {
+        if (!this.audioContext) return Promise.resolve();
+        
         return new Promise((resolve) => {
             const now = this.audioContext.currentTime;
             
-            // Load and play crowd cheering sound
             fetch('crowd-cheers-314919.mp3')
                 .then(response => response.arrayBuffer())
                 .then(arrayBuffer => this.audioContext.decodeAudioData(arrayBuffer))
@@ -358,24 +412,21 @@ class VoiceInventory {
                     const crowdGain = this.audioContext.createGain();
                     crowdSource.buffer = audioBuffer;
                     
-                    // Set volume for crowd sound
                     crowdGain.gain.setValueAtTime(0, now);
-                    crowdGain.gain.linearRampToValueAtTime(0.8, now + 0.3); // Quick fade in
-                    crowdGain.gain.setValueAtTime(0.8, now + 3.0);          // Hold volume
-                    crowdGain.gain.linearRampToValueAtTime(0, now + 4.0);   // Fade out
+                    crowdGain.gain.linearRampToValueAtTime(0.8, now + 0.3);
+                    crowdGain.gain.setValueAtTime(0.8, now + 3.0);
+                    crowdGain.gain.linearRampToValueAtTime(0, now + 4.0);
                     
                     crowdSource.connect(crowdGain);
                     crowdGain.connect(this.audioContext.destination);
                     
-                    // Play the crowd sound
                     crowdSource.start();
                     
-                    // Resolve after the sound has played
-                    setTimeout(resolve, 4000); // 4 seconds total duration
+                    setTimeout(resolve, 4000);
                 })
                 .catch(error => {
                     console.error('Error loading crowd sound:', error);
-                    resolve(); // Resolve even if there's an error
+                    resolve();
                 });
         });
     }
@@ -391,7 +442,6 @@ class VoiceInventory {
     }
     
     processSalesQuery(query) {
-        // Time period keywords
         const timeKeywords = {
             hour: ['hour', 'hourly', 'last hour'],
             day: ['day', 'daily', 'today'],
@@ -401,7 +451,6 @@ class VoiceInventory {
             year: ['year', 'yearly', 'annual', 'annually', 'this year']
         };
         
-        // Determine time period from query
         let timePeriod = null;
         for (const [period, keywords] of Object.entries(timeKeywords)) {
             if (keywords.some(keyword => query.includes(keyword))) {
@@ -410,7 +459,6 @@ class VoiceInventory {
             }
         }
         
-        // Get corresponding sales data
         let salesData;
         switch (timePeriod) {
             case 'hour':
@@ -435,7 +483,6 @@ class VoiceInventory {
                 return "I'm not sure which time period you're asking about. You can ask about hourly, daily, weekly, monthly, quarterly, or yearly sales.";
         }
         
-        // Format the response
         const formattedAmount = new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD'
@@ -445,15 +492,21 @@ class VoiceInventory {
     }
     
     async querySquareInventory(query) {
-        // Simple natural language processing for inventory queries
         const words = query.toLowerCase().split(' ');
         for (const item in this.mockInventory) {
             if (words.includes(item)) {
-                return `You have ${this.mockInventory[item]} ${item} in stock.`;
+                const quantity = this.mockInventory[item];
+                return {
+                    text: `You have ${quantity} ${item} in stock.`,
+                    isOutOfStock: quantity === 0
+                };
             }
         }
         
-        return "I couldn't find that item in the inventory.";
+        return {
+            text: "I couldn't find that item in the inventory.",
+            isOutOfStock: false
+        };
     }
     
     addToHistory(query, response) {
@@ -480,7 +533,6 @@ class VoiceInventory {
     }
 }
 
-// Initialize the application when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    const voiceInventory = new VoiceInventory();
+    window.voiceInventory = new VoiceInventory();
 });
