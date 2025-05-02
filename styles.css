@@ -132,9 +132,9 @@ body {
 }
 
 .response.dramatic-fade-in {
-    animation: dramaticScale 2s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-              dramaticFade 2s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-              dramaticUnblur 2s cubic-bezier(0.47, 0, 0.93, 0.3) forwards;  /* Dramatic ease-in curve */
+    animation: dramaticScale 12s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+              dramaticFade 12s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+              dramaticUnblur 12s cubic-bezier(0.47, 0, 0.93, 0.3) forwards;  /* Dramatic ease-in curve */
 }
 
 @keyframes dramaticScale {
@@ -159,19 +159,19 @@ body {
     0% {
         filter: blur(35px);
     }
-    70% {
-        filter: blur(35px);  /* Maintain full blur for longer */
-    }
     85% {
-        filter: blur(30px);  /* Start clearing very slowly */
+        filter: blur(35px);  /* Maintain full blur even longer */
     }
     92% {
-        filter: blur(20px);  /* Still quite blurry */
+        filter: blur(30px);  /* Start clearing very slowly */
     }
     96% {
-        filter: blur(10px);  /* Quick clearing at the end */
+        filter: blur(20px);  /* Still quite blurry */
     }
     98% {
+        filter: blur(10px);  /* Quick clearing near the end */
+    }
+    99% {
         filter: blur(5px);   /* Final clarity rush */
     }
     100% {
