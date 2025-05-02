@@ -289,14 +289,15 @@ class VoiceInventory {
             this.createStars();
             this.responseText.classList.add('dramatic-fade-in');
             
-            // Play the bang sound
+            // Play the intro audio (12 seconds)
             await this.playDoodoodoo();
             
-            // Start speaking after animation completes
-            setTimeout(() => {
-                this.speakResponse(response);
-                this.addToHistory(query, response);
-            }, 12000); // Match the 12-second animation duration
+            // Add a small pause after intro audio (0.5 seconds)
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Start speaking the response
+            await this.speakResponse(response);
+            this.addToHistory(query, response);
             
         } catch (error) {
             console.error('Error processing query:', error);
@@ -307,34 +308,41 @@ class VoiceInventory {
     }
     
     async speakResponse(text) {
-        this.synthesis.cancel();
-        
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.voice = this.voice;
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-        
-        this.responseText.classList.add('speaking');
-        
-        // Check if this is a yearly revenue response over $1 million
-        const isHighRevenue = text.includes('yearly sales revenue') && 
-                            text.includes('$') && 
-                            parseFloat(text.replace(/[^0-9.-]+/g, '')) > 1000000;
-        
-        // If it's high revenue, play celebration after speech
-        if (isHighRevenue) {
-            utterance.onend = () => {
-                this.responseText.classList.remove('speaking');
-                this.playCelebration();
-            };
-        } else {
-            utterance.onend = () => {
-                this.responseText.classList.remove('speaking');
-            };
-        }
-        
-        this.synthesis.speak(utterance);
+        return new Promise((resolve) => {
+            this.synthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.voice = this.voice;
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+            
+            this.responseText.classList.add('speaking');
+            
+            // Check if this is a yearly revenue response over $1 million
+            const isHighRevenue = text.includes('yearly sales revenue') && 
+                                text.includes('$') && 
+                                parseFloat(text.replace(/[^0-9.-]+/g, '')) > 1000000;
+            
+            // If it's high revenue, play celebration after speech with a small delay
+            if (isHighRevenue) {
+                utterance.onend = () => {
+                    this.responseText.classList.remove('speaking');
+                    setTimeout(() => {
+                        this.playCelebration();
+                        resolve();
+                    }, 300); // 0.3 second delay before celebration
+                };
+            } else {
+                utterance.onend = () => {
+                    this.responseText.classList.remove('speaking');
+                    resolve();
+                };
+            }
+            
+            this.synthesis.speak(utterance);
+        });
+    }
     }
     
     playCelebration() {
