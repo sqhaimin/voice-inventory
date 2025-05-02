@@ -292,8 +292,8 @@ class VoiceInventory {
             // Play the intro audio (12 seconds)
             await this.playDoodoodoo();
             
-            // Add a small pause after intro audio (0.5 seconds)
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Add a small pause after intro audio (0.2 seconds)
+            await new Promise(resolve => setTimeout(resolve, 200));
             
             // Start speaking the response
             await this.speakResponse(response);
@@ -331,7 +331,7 @@ class VoiceInventory {
                     setTimeout(() => {
                         this.playCelebration();
                         resolve();
-                    }, 300); // 0.3 second delay before celebration
+                    }, 200); // 0.2 second delay before celebration
                 };
             } else {
                 utterance.onend = () => {
