@@ -132,9 +132,9 @@ body {
 }
 
 .response.dramatic-fade-in {
-    animation: dramaticScale 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-              dramaticFade 3s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-              dramaticUnblur 3s cubic-bezier(0.47, 0, 0.93, 0.3) forwards;  /* Dramatic ease-in curve */
+    animation: dramaticScale 2s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+              dramaticFade 2s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+              dramaticUnblur 2s cubic-bezier(0.47, 0, 0.93, 0.3) forwards;  /* Dramatic ease-in curve */
 }
 
 @keyframes dramaticScale {
