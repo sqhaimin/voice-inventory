@@ -282,6 +282,9 @@ class VoiceInventory {
             this.responseText.style.opacity = '0';
             this.responseText.classList.remove('dramatic-fade-in');
             
+            // Force a reflow to ensure animation restarts
+            void this.responseText.offsetWidth;
+            
             // Start stars and trigger dramatic fade-in
             this.createStars();
             this.responseText.classList.add('dramatic-fade-in');
@@ -289,11 +292,11 @@ class VoiceInventory {
             // Play the bang sound
             await this.playDoodoodoo();
             
-            // Start speaking after effects
+            // Start speaking after animation completes
             setTimeout(() => {
                 this.speakResponse(response);
                 this.addToHistory(query, response);
-            }, 1000);
+            }, 12000); // Match the 12-second animation duration
             
         } catch (error) {
             console.error('Error processing query:', error);

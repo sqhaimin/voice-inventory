@@ -134,7 +134,7 @@ body {
 .response.dramatic-fade-in {
     animation: dramaticScale 12s cubic-bezier(0.22, 1, 0.36, 1) forwards,
               dramaticFade 12s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-              dramaticUnblur 12s cubic-bezier(0.47, 0, 0.93, 0.3) forwards;  /* Dramatic ease-in curve */
+              dramaticUnblur 12s cubic-bezier(0.6, 0, 0.9, 0.1) forwards;  /* Even more dramatic ease-in */
 }
 
 @keyframes dramaticScale {
@@ -159,23 +159,26 @@ body {
     0% {
         filter: blur(35px);
     }
-    85% {
-        filter: blur(35px);  /* Maintain full blur even longer */
+    90% {
+        filter: blur(35px);  /* Stay fully blurred longer */
     }
-    92% {
-        filter: blur(30px);  /* Start clearing very slowly */
+    95% {
+        filter: blur(32px);  /* Begin very subtle clearing */
     }
-    96% {
-        filter: blur(20px);  /* Still quite blurry */
+    97% {
+        filter: blur(28px);  /* Still very blurry */
     }
     98% {
-        filter: blur(10px);  /* Quick clearing near the end */
+        filter: blur(20px);  /* Start clearing more */
     }
     99% {
-        filter: blur(5px);   /* Final clarity rush */
+        filter: blur(10px);  /* Getting clearer */
+    }
+    99.5% {
+        filter: blur(5px);   /* Almost clear */
     }
     100% {
-        filter: blur(0px);
+        filter: blur(0px);   /* Final clarity */
     }
 }
 
